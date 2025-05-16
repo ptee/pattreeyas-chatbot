@@ -10,8 +10,9 @@ langchain-openai>=0.3.5
 langchain-postgres>=0.0.14
 langchain-text-splitters>=0.3.6
 langchainhub>=0.1.21
-streamlit==1.43.2
-psycopg2-binary>=2.9.9
-pgvector>=0.2.0
-sqlalchemy>=2.0.0
+streamlit>=1.43.2
+psycopg>=3.2.9
+psycopg-pool>=3.2.6
+psycopg2-binary>=2.9.10
+pgvector>=0.3.6
 streamlit>=1.28.0
