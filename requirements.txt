@@ -2,7 +2,7 @@ langchain==0.3.19
 langchain-community==0.3.18
 langchain-core==0.3.54
 langchain-openai==0.3.5
-langchain-postgres==0.0.12
+langchain-postgres==0.0.14
 langchain-text-splitters==0.3.6
 streamlit==1.43.2
 openai==1.78.1
@@ -11,4 +11,5 @@ pydantic-settings==2.7.1
 pydantic_core==2.27.2
 toml==0.10.2
 tiktoken==0.8.0
+psycopg-binary==3.2.9
 

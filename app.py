@@ -9,10 +9,13 @@ from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 from langchain.agents import create_tool_calling_agent
 from langchain.agents import AgentExecutor
-from langchain_postgres.vectorstores import PGVector # psycopg (v3) is required
+#from langchain_postgres.vectorstores import PGVector
+from langchain_postgres import PGVectorStore, PGEngine, PGVector
+
 
 # NEON.tech
 neon_url = st.secrets["neon"]["documents_pt_url"]
+
 
 # Init Embeddings model
 embeddings = OpenAIEmbeddings(
@@ -21,7 +24,7 @@ embeddings = OpenAIEmbeddings(
 )
 
 # Connect embeddings to neon database
-db = PGVector(
+vector_store = PGVector(
     connection=neon_url+"?sslmode=require",
     embeddings=embeddings,
     collection_name="documents_pt",
@@ -50,7 +53,7 @@ prompt = ChatPromptTemplate.from_messages(
 def retrieve_db(query: str):
     """ Retrieve information related to a question."""
 
-    retrieved_docs = db.similarity_search(query, k=5)
+    retrieved_docs = vector_store.similarity_search(query, k=5)
     serialized = "\n\n".join(
         (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
         for doc in retrieved_docs
