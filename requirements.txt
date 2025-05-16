@@ -6,7 +6,6 @@ langchain-postgres==0.0.12
 langchain-text-splitters==0.3.6
 streamlit==1.43.2
 openai==1.78.1
-pgvector==0.3.6
 pydantic==2.10.6
 pydantic-settings==2.7.1
 pydantic_core==2.27.2
