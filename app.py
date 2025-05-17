@@ -16,7 +16,6 @@ from langchain_postgres.vectorstores import PGVector
 # NEON.tech
 neon_url = st.secrets["neon"]["documents_pt_url"]
 
-
 # Init Embeddings model
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-small",
