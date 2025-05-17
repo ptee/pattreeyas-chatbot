@@ -34,7 +34,8 @@ vector_store = PGVector(
 # Init LLM
 llm = ChatOpenAI(
     model="gpt-4o-mini",
-    temperature=0 
+    temperature=0,
+    openai_api_key=st.secrets["openai"]["api_key"]
 )
 
 # Prompt template
