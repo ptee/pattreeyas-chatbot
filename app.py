@@ -9,8 +9,8 @@ from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 from langchain.agents import create_tool_calling_agent
 from langchain.agents import AgentExecutor
-#from langchain_postgres.vectorstores import PGVector
-from langchain_postgres import PGVectorStore, PGEngine, PGVector
+from langchain_postgres.vectorstores import PGVector
+#from langchain_postgres import PGVectorStore, PGEngine, PGVector
 
 
 # NEON.tech
