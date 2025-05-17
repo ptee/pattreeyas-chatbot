@@ -1,4 +1,4 @@
-psycopg-binary==2.9.9
+psycopg2-binary==2.9.20
 pgvector==0.3.6
 langchain==0.3.19
 langchain-community==0.3.18
@@ -13,5 +13,5 @@ pydantic-settings==2.7.1
 pydantic_core==2.27.2
 toml==0.10.2
 tiktoken==0.8.0
-psycopg-binary==2.9.9
+psycopg2-binary==2.9.10
 
