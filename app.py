@@ -13,8 +13,7 @@ from langchain_postgres.vectorstores import PGVector
 #from langchain_postgres import PGVectorStore, PGEngine, PGVector
 
 
-# NEON.tech
-neon_url = st.secrets["neon"]["documents_pt_url"]
+kasioss_url = st.secrets["kasioss"]["kasioss_url"]
 
 # Init Embeddings model
 embeddings = OpenAIEmbeddings(
@@ -24,7 +23,7 @@ embeddings = OpenAIEmbeddings(
 
 # Connect embeddings to neon database
 vector_store = PGVector(
-    connection=neon_url+"?sslmode=require",
+    connection=kasioss_url+"?sslmode=require",
     embeddings=embeddings,
     collection_name="documents_pt",
     use_jsonb=True,
