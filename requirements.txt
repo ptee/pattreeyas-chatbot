@@ -16,6 +16,5 @@ pydantic_core==2.27.2
 toml==0.10.2
 tiktoken==0.8.0
 langgraph==0.6.7
-langgraph-prebuilt==0.6.4
 langgraph-runtime-inmem==0.12.0
 
