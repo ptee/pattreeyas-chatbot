@@ -178,6 +178,7 @@ if user_question:
             # Generate follow-up suggestions
             suggestion_prompt = f"""Based on this conversation, suggest 2 brief follow-up questions concerning Pattreeya's background, work and education.
             Refer to the original user question when generating suggestions.
+            Focus on her recent experiences, research focus, and skills.
             Use Pattreeya or \"her\" instead of \"you\" in the suggestions but \"you\" refer to the Pattreeya not the user.
             
             Do not repeat the original question.
@@ -185,7 +186,7 @@ if user_question:
                 Question: {user_question}
                 Answer: {answer}
 
-                Format as a numbered list."""
+            Format as a numbered list."""
             followup_response = llm.invoke(suggestion_prompt)
             suggestions = followup_response.content
 
