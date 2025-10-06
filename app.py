@@ -29,21 +29,50 @@ vectorstore = PGVector(
 # Init LLM
 llm = ChatOpenAI(
     model=st.secrets["openai"]["model"],
-    temperature=0.1,
+    temperature=0.2,  # Increased for more creative synthesis while maintaining accuracy
     openai_api_key=st.secrets["openai"]["api_key"]
 )
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are Pattreeya's assistant who knows best about Pattreeya (Tanisaro).
-        You are not able to answer any other questions else. You only know about Pattreeya.
-        All related questions are welcome, including her background, work, and education.
+    ("system", """You are Pattreeya's assistant. You MUST follow these rules:
+
+FACTUAL ACCURACY (Non-Negotiable):
+1. For contact information (email, LinkedIn, GitHub, phone, address):
+   - Copy ALL fields EXACTLY as they appear in the RETRIEVED CONTEXT
+   - CRITICAL: Copy emails CHARACTER-BY-CHARACTER (e.g., "ptanisaro" NOT "patnisaro")
+   - Include BOTH "email" and "email-alt" fields if both exist
+   - Read emails TWICE before writing them
+2. For dates, company names, job titles, education degrees, publication titles:
+   - Copy EXACTLY as shown in the RETRIEVED CONTEXT
+   - Do NOT approximate or paraphrase
+
+CREATIVE SYNTHESIS (Encouraged):
+When discussing Pattreeya's work and research, you may:
+- Draw connections between her different experiences and skills
+- Explain how her background in one area (e.g., navigation systems) relates to her current work (e.g., LLMs and RAG)
+- Highlight patterns across her career (e.g., focus on time-series analysis, from human motion to agricultural data)
+- Discuss how her academic research (PhD on time-dependent data) informs her industry work
+- Synthesize insights from multiple projects and positions
+- Use analogies to explain her technical expertise to different audiences
+
+SCOPE OF QUESTIONS:
+- You are ONLY designed to answer questions about Pattreeya Tanisaro
+- If asked about unrelated topics, respond: "I appreciate your question, but I'm specifically designed to answer questions about Pattreeya Tanisaro only. Please feel free to ask me anything about her background, work experience, education, skills, publications, or research!"
+
+RESPONSE STYLE:
+- Be insightful and make meaningful connections between her experiences
+- Show the evolution and continuity in her career path
+- Highlight transferable skills and deep expertise
+- When appropriate, connect her academic research to practical applications
+
+Remember: Be factually precise with data points, but intellectually creative in showing relationships and insights.
         """
     ),
     MessagesPlaceholder(variable_name="messages"),  # <- history from ChatState
     ("user", "{question}")  # last user input
 ])
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
 # === Define Chat State ===
 class ChatState(TypedDict):
@@ -61,18 +90,70 @@ def _on_suggestion_click(sug: str):
 def retrieve_node(state: ChatState):
     """Retrieve documents based on the last user message."""
 
-    query = state["messages"][-1].content
+    query = state["messages"][-1].content.lower()
     docs = retriever.invoke(query)
 
     if not docs:
         return {
-            "messages": [AIMessage(content="I couldn’t find anything relevant.")]
+            "messages": [AIMessage(content="I couldn't find anything relevant.")]
         }
-    # 
-    # Append docs content to system message for the LLM
-    docs_text = "\n\n".join([d.page_content for d in docs])
+
+    # Check if query is about contact information
+    contact_keywords = ["email", "contact", "phone", "linkedin", "github", "reach", "chatbot", "how to reach", "get in touch"]
+    is_contact_query = any(keyword in query for keyword in contact_keywords)
+
+    # If it's a contact query, ALWAYS ensure CV metadata is at the top
+    if is_contact_query:
+        # Fetch CV metadata directly by ID to ensure we get the correct contact info
+        try:
+            # Try to get the metadata document directly
+            metadata_docs = vectorstore.similarity_search("email ptanisaro@kasioss.com linkedin github contact information", k=2)
+
+            # Prioritize the cv_metadata document
+            cv_metadata = [d for d in metadata_docs if d.metadata.get("type") == "cv_metadata"]
+            other_docs = [d for d in docs if d.metadata.get("type") != "cv_metadata"]
+
+            if cv_metadata:
+                # Put CV metadata first, then other relevant docs
+                docs = cv_metadata[:1] + other_docs[:4]
+            else:
+                # If we couldn't find cv_metadata, still try to get it from the original docs
+                has_metadata = any(d.metadata.get("type") == "cv_metadata" for d in docs)
+                if not has_metadata:
+                    docs = metadata_docs[:1] + docs[:4]
+        except Exception:
+            # If anything fails, continue with original docs
+            pass
+
+    # Format context with clear labeling
+    docs_text = "=== RETRIEVED CONTEXT FROM DATABASE ===\n\n"
+    for i, d in enumerate(docs, 1):
+        section = d.metadata.get("section", "general")
+        content = d.page_content
+
+        # If this is cv_metadata with contact info, highlight emails clearly
+        if d.metadata.get("type") == "cv_metadata" and "contact" in d.metadata:
+            contact = d.metadata["contact"]
+            docs_text += f"[Source {i} - {section}]\n"
+            docs_text += f"⚠️ CONTACT INFORMATION - COPY EXACTLY CHARACTER-BY-CHARACTER:\n"
+            if "email" in contact:
+                docs_text += f"  PRIMARY EMAIL: {contact['email']}\n"
+            if "email-alt" in contact:
+                docs_text += f"  ALTERNATIVE EMAIL: {contact['email-alt']}\n"
+            if "linkedin" in contact:
+                docs_text += f"  LINKEDIN: {contact['linkedin']}\n"
+            if "github" in contact:
+                docs_text += f"  GITHUB: {contact['github']}\n"
+            if "chatbot" in contact:
+                docs_text += f"  CHATBOT: {contact['chatbot']}\n"
+            docs_text += f"\nFull metadata:\n{content}\n\n"
+        else:
+            docs_text += f"[Source {i} - {section}]\n{content}\n\n"
+
+    docs_text += "=== END OF RETRIEVED CONTEXT ===\n"
+
     return {
-        "messages": [HumanMessage(content=f"Context:\n{docs_text}")]
+        "messages": [HumanMessage(content=docs_text)]
     }
 
 def generate_node(state: ChatState):
@@ -176,17 +257,32 @@ if user_question:
             answer = result["messages"][-1].content
 
             # Generate follow-up suggestions
-            suggestion_prompt = f"""Based on this conversation, suggest 2 brief follow-up questions concerning Pattreeya's background, work and education.
-            Refer to the original user question when generating suggestions.
-            Focus on her recent experiences, research focus, and skills.
-            Use Pattreeya or \"her\" instead of \"you\" in the suggestions but \"you\" refer to the Pattreeya not the user.
-            
-            Do not repeat the original question.
-            
-                Question: {user_question}
-                Answer: {answer}
+            suggestion_prompt = f"""Based on this conversation about Pattreeya Tanisaro, suggest 2 insightful follow-up questions that explore:
 
-            Format as a numbered list."""
+1. Her professional experience and technical expertise
+2. Her research work and academic contributions
+3. Connections between her different roles and projects
+4. Evolution of her skills from academia to industry
+5. How her past work informs her current capabilities
+
+Guidelines:
+- Make questions thought-provoking and specific (not generic)
+- Focus on experience, research, publications, or skill development
+- Build on the context of the current conversation
+- Use "her" or "Pattreeya" (not "you")
+- Keep questions concise (under 15 words each)
+- Do NOT repeat the original question
+
+Examples of good follow-ups:
+- "How did her navigation systems work influence her current RAG implementations?"
+- "What research insights from her PhD apply to agricultural data analysis?"
+- "How has her time-series expertise evolved from academia to industry?"
+
+Current conversation:
+Question: {user_question}
+Answer: {answer}
+
+Format as a numbered list (1. and 2.)"""
             followup_response = llm.invoke(suggestion_prompt)
             suggestions = followup_response.content
 
@@ -228,7 +324,7 @@ if user_question:
 # === Sidebar ===
 with st.sidebar:
     #st.header("Options")
-    st.image("https://kasioss.com/pt/images/pt-01.png", width=100, caption="")
+    st.image(st.secrets["kasioss"]["profile_pic"], width=100, caption="")
     if st.button("Clear Chat History"):
         st.session_state.graph_state = {"messages": []}
         st.session_state.messages = []
