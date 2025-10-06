@@ -65,6 +65,14 @@ RESPONSE STYLE:
 - Highlight transferable skills and deep expertise
 - When appropriate, connect her academic research to practical applications
 
+LANGUAGE MATCHING (Critical):
+- ALWAYS respond in the SAME LANGUAGE the user uses to ask the question
+- If the user asks in German, respond in German
+- If the user asks in English, respond in English
+- If the user asks in Thai, respond in Thai
+- Detect the language from the user's question and match it exactly
+- This applies to ALL responses, including follow-up suggestions
+
 Remember: Be factually precise with data points, but intellectually creative in showing relationships and insights.
         """
     ),
@@ -272,6 +280,8 @@ Guidelines:
 - Use "her" or "Pattreeya" (not "you")
 - Keep questions concise (under 15 words each)
 - Do NOT repeat the original question
+- CRITICAL: Generate follow-up questions in the SAME LANGUAGE as the user's question
+  (If question is in German, suggestions in German; if English, suggestions in English; if Thai, suggestions in Thai)
 
 Examples of good follow-ups:
 - "How did her navigation systems work influence her current RAG implementations?"
