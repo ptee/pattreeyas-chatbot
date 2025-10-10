@@ -115,7 +115,7 @@ def retrieve_node(state: ChatState):
         # Fetch CV metadata directly by ID to ensure we get the correct contact info
         try:
             # Try to get the metadata document directly
-            metadata_docs = vectorstore.similarity_search("email ptanisaro@kasioss.com linkedin github contact information", k=2)
+            metadata_docs = vectorstore.similarity_search("contact information", k=2, filter={"type": "cv_metadata"})
 
             # Prioritize the cv_metadata document
             cv_metadata = [d for d in metadata_docs if d.metadata.get("type") == "cv_metadata"]
